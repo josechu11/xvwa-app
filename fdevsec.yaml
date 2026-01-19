@@ -1,7 +1,3 @@
-id:
-  org: 900b4d60-cf46-43ff-8ab8-d1bb83dbd4a9
-  app: 439f8671-a32b-4e67-8584-acb662175a14
-
 # If below settings are not configured, scans will be performed for all supported scanners.
 scanners:
   - sast

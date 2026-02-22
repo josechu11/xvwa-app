@@ -1,85 +1,46 @@
 pipeline {
     agent any
 
-    environment {
-        // Variables de entorno disponibles en todo el pipeline
-        REPO_NAME = "${env.GIT_URL.tokenize('/').last().replace('.git', '')}"
+    // Solo actuar sobre main
+    triggers {
+        githubPush()
     }
 
     stages {
-
         stage('Checkout') {
             steps {
-                echo "Clonando rama: ${env.BRANCH_NAME}"
                 checkout scm
-            }
-        }
-
-        stage('Instalar dependencias') {
-            steps {
-                sh '''
-                    # Ajusta según tu stack (Node, Python, Java, etc.)
-                    npm install        # Node.js
-                    # pip install -r requirements.txt   # Python
-                    # mvn dependency:resolve            # Java/Maven
-                '''
             }
         }
 
         stage('Linting') {
             steps {
-                sh '''
-                    npm run lint
-                    # flake8 .          # Python
-                '''
+                sh 'npm run lint'
             }
         }
 
-        stage('Tests unitarios') {
+        stage('Tests') {
             steps {
-                sh '''
-                    npm test -- --coverage
-                    # pytest --junitxml=results.xml   # Python
-                '''
-            }
-            post {
-                always {
-                    // Publicar resultados de tests en Jenkins
-                    junit '**/test-results/*.xml'
-                }
+                sh 'npm test'
             }
         }
 
         stage('Build') {
             steps {
-                sh '''
-                    npm run build
-                    # mvn package -DskipTests   # Java
-                '''
-            }
-        }
-
-        stage('Análisis de seguridad (opcional)') {
-            steps {
-                sh '''
-                    # Ejemplo con npm audit
-                    npm audit --audit-level=high
-                '''
+                sh 'npm run build'
             }
         }
     }
 
     post {
-        success {
-            echo '✅ Pipeline completado exitosamente'
-            // Aquí puedes agregar notificaciones (Slack, email, etc.)
-        }
         failure {
-            echo '❌ Pipeline falló - revisar logs'
+            // Notificar al equipo que main está roto
+            mail to: 'equipo@tuempresa.com',
+                 subject: "❌ Pipeline falló en main - ${env.GIT_COMMIT}",
+                 body: "El commit ${env.GIT_COMMIT} de ${env.GIT_COMMITTER_NAME} rompió el pipeline.\n\nRevisa: ${env.BUILD_URL}"
         }
-        always {
-            // Limpiar workspace al terminar
-            cleanWs()
+        success {
+            echo '✅ Main estable'
         }
     }
 }

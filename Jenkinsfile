@@ -1,32 +1,47 @@
 pipeline {
     agent any
+
+    // Solo actuar sobre main
+    triggers {
+        githubPush()
+    }
+
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-        stage('Build') {
+
+        stage('Linting') {
             steps {
-                echo 'Building project...'
-                // Agrega comandos de build
-                // Por ejemplo: sh 'mvn clean package'
+                sh 'npm run lint'
             }
         }
-        stage('Test') {
+
+        stage('Tests') {
             steps {
-                echo 'Running tests...'
-                // Agrega comandos de prueba
-                // Por ejemplo: sh 'mvn test'
+                sh 'npm test'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'npm run build'
             }
         }
     }
+
     post {
-        success {
-            echo 'Build successful!'
-        }
         failure {
-            echo 'Build failed!'
+            // Notificar al equipo que main está roto
+            mail to: 'equipo@tuempresa.com',
+                 subject: "❌ Pipeline falló en main - ${env.GIT_COMMIT}",
+                 body: "El commit ${env.GIT_COMMIT} de ${env.GIT_COMMITTER_NAME} rompió el pipeline.\n\nRevisa: ${env.BUILD_URL}"
+        }
+        success {
+            echo '✅ Main estable'
         }
     }
 }
+```

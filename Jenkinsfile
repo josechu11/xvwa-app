@@ -14,6 +14,7 @@ pipeline {
         }
 
         stage('Linting') {
+            echo 'Compilando...'
             steps {
                 sh 'npm run lint'
             }
@@ -21,6 +22,7 @@ pipeline {
 
         stage('Tests') {
             steps {
+                 echo 'Ejecutando tests...'
                 sh 'npm test'
             }
         }
